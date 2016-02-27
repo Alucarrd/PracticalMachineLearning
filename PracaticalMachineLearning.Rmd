@@ -1,0 +1,114 @@
+---
+title: "PracticalMachineLearning"
+author: "Peter Tan"
+date: "02/24/2016"
+output: html_document
+---
+
+##Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+##Data
+
+The training data for this project are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+```{r}
+#load the necessary library
+library(RCurl)
+library(caret)
+library(randomForest)
+library(ggplot2)
+library(gbm)
+library(rpart)
+```
+
+#Preprocess data
+In this step, we want to import our data in and set any missing value to be NA.  That way, we can then replace the NA value to 0 and submit entire data set through our machine learning exercise.
+```{r}
+#Import the training data set
+trainingURL <- getURL("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv")
+trainingData <- read.csv(text = trainingURL , na.strings=c("NA","#DIV/0!", ""))
+
+#Import the final testing data set
+testingURL <- getURL("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv")
+testingData <- read.csv(text = testingURL, na.strings=c("NA","#DIV/0!", ""))
+
+#Replace all the NA value to 0
+trainingData[is.na(trainingData)] <- 0
+testingData[is.na(testingData)] <- 0
+
+#Remove the non-feature columns from the data frame
+trainingData <- trainingData[, -c(1:7)]
+testingData <- testingData[, -c(1:7)]
+```
+
+##Split data set into training and testing to train our model
+We want to split our training data set into training and testing so we can do cross validation against our model.
+```{r}
+inTrain <- createDataPartition(trainingData$classe, p=.70, list=FALSE)
+training <- trainingData[inTrain,]
+testing <- trainingData[-inTrain,]
+```
+
+#Exploratory Analysis
+Based on the bar graph below, we can see that class A has the most count.
+```{r}
+plot(training$classe, col="blue", main="Classe with Counts", xlab="classe", ylab="Count")
+```
+
+##Machine Learning
+First machine learning approach -> Decision Tree
+```{r}
+#Train our decision tree model
+model.rpart <- rpart(classe ~ ., data=training, method="class")
+
+# Predicting 
+predict.rpart <- predict(model.rpart, testing, type = "class")
+#Review the accuracy
+confusionMatrix(predict.rpart, testing$classe)
+```
+
+Second machine learning approach -> GBM
+```{r}
+model.gbm <- train(classe ~ ., method="gbm", data=training, verbose=FALSE)
+predict.gbm<- predict(model.gbm, testing)
+confusionMatrix(predict.gbm, testing$classe)
+```
+
+Third machine learning approach -> Random Forest
+```{r}
+model.rf <- train(classe ~ ., method="rf", data=training, type="class")
+predict.rf<- predict(model.rf, testing)
+confusionMatrix(predict.rf, testing$classe)
+```
+
+Based off the accuracy comparison above, Random Forest gives us the highest accuracy.  So we will use the Random Forest to perform the final prediction against the test data set
+
+```{r}
+prediction <- predict(model.rf, testingData)
+prediction
+```
+
+Finally, we are going to save the output
+```{r}
+
+product_createFile = function(x) {
+  n = length(x)
+  for (i in 1:n) {
+    filename = paste0("problem_id_", i, ".txt")
+    write.table(x[i], file = filename, quote = FALSE, row.names = FALSE, 
+                col.names = FALSE)
+  }
+}
+
+product_createFile(prediction)
+```
+link to github: https://github.com/Alucarrd/PracticalMachineLearning
+

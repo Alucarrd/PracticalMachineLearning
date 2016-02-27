@@ -1,0 +1,322 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1347\cocoasubrtf570
+{\fonttbl\f0\fnil\fcharset0 HelveticaNeue-Medium;\f1\fnil\fcharset0 HelveticaNeue;\f2\fmodern\fcharset0 Courier;
+}
+{\colortbl;\red255\green255\blue255;\red38\green38\blue38;\red41\green101\blue168;\red242\green242\blue242;
+\red255\green255\blue255;}
+{\info
+{\title PracticalMachineLearning}
+{\author Peter Tan}}\vieww28600\viewh15280\viewkind0
+\deftab720
+\pard\pardeftab720\sl820\sa200
+
+\f0\fs76 \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 PracticalMachineLearning\
+\pard\pardeftab720\sl380\sa200
+
+\f1\i\fs36 \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 Peter Tan
+\f0\i0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \
+
+\f1\i \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 02/24/2016
+\f0\i0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \
+\pard\pardeftab720\sl660\sa200
+
+\fs60 \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 Background\
+\pard\pardeftab720\sl400\sa200
+
+\f1\fs28 \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement \'96 a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: {\field{\*\fldinst{HYPERLINK "http://groupware.les.inf.puc-rio.br/har"}}{\fldrslt \cf3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec3 http://groupware.les.inf.puc-rio.br/har}} (see the section on the Weight Lifting Exercise Dataset).\
+\pard\pardeftab720\sl660\sa200
+
+\f0\fs60 \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 Data\
+\pard\pardeftab720\sl400\sa200
+
+\f1\fs28 \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 The training data for this project are available here:\
+\pard\pardeftab720\sl400\sa200
+{\field{\*\fldinst{HYPERLINK "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"}}{\fldrslt \cf3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec3 https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv}}\
+The test data are available here:\
+{\field{\*\fldinst{HYPERLINK "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"}}{\fldrslt \cf3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec3 https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv}}\
+\pard\pardeftab720\sl360
+
+\f2\fs26 \cf2 \cb4 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 #load the necessary library\
+library(RCurl)\
+\pard\pardeftab720\sl360
+\cf2 \cb5 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 ## Loading required package: bitops\
+\pard\pardeftab720\sl360
+\cf2 \cb4 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 library(caret)\
+\pard\pardeftab720\sl360
+\cf2 \cb5 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 ## Loading required package: lattice\
+## Loading required package: ggplot2\
+\pard\pardeftab720\sl360
+\cf2 \cb4 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 library(randomForest)\
+\pard\pardeftab720\sl360
+\cf2 \cb5 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 ## randomForest 4.6-12\
+## Type rfNews() to see new features/changes/bug fixes.\
+## \
+## Attaching package: 'randomForest'\
+## The following object is masked from 'package:ggplot2':\
+## \
+##     margin\
+\pard\pardeftab720\sl360
+\cf2 \cb4 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 library(ggplot2)\
+library(gbm)\
+\pard\pardeftab720\sl360
+\cf2 \cb5 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 ## Loading required package: survival\
+## \
+## Attaching package: 'survival'\
+## The following object is masked from 'package:caret':\
+## \
+##     cluster\
+## Loading required package: splines\
+## Loading required package: parallel\
+## Loaded gbm 2.1.1\
+\pard\pardeftab720\sl360
+\cf2 \cb4 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 library(rpart)\
+\pard\pardeftab720\sl740\sa200
+
+\f0\fs68 \cf2 \cb1 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 Preprocess data\
+\pard\pardeftab720\sl400\sa200
+
+\f1\fs28 \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 In this step, we want to import our data in and set any missing value to be NA. That way, we can then replace the NA value to 0 and submit entire data set through our machine learning exercise.\
+\pard\pardeftab720\sl360
+
+\f2\fs26 \cf2 \cb4 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 #Import the training data set\
+trainingURL <- getURL("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv")\
+trainingData <- read.csv(text = trainingURL , na.strings=c("NA","#DIV/0!", ""))\
+\
+#Import the final testing data set\
+testingURL <- getURL("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv")\
+testingData <- read.csv(text = testingURL, na.strings=c("NA","#DIV/0!", ""))\
+\
+#Replace all the NA value to 0\
+trainingData[is.na(trainingData)] <- 0\
+testingData[is.na(testingData)] <- 0\
+\
+#Remove the non-feature columns from the data frame\
+trainingData <- trainingData[, -c(1:7)]\
+testingData <- testingData[, -c(1:7)]\
+\pard\pardeftab720\sl660\sa200
+
+\f0\fs60 \cf2 \cb1 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 Split data set into training and testing to train our model\
+\pard\pardeftab720\sl400\sa200
+
+\f1\fs28 \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 We want to split our training data set into training and testing so we can do cross validation against our model.\
+\pard\pardeftab720\sl360
+
+\f2\fs26 \cf2 \cb4 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 inTrain <- createDataPartition(trainingData$classe, p=.70, list=FALSE)\
+training <- trainingData[inTrain,]\
+testing <- trainingData[-inTrain,]\
+\pard\pardeftab720\sl740\sa200
+
+\f0\fs68 \cf2 \cb1 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 Exploratory Analysis\
+\pard\pardeftab720\sl400\sa200
+
+\f1\fs28 \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 Based on the bar graph below, we can see that class A has the most count.\
+\pard\pardeftab720\sl360
+
+\f2\fs26 \cf2 \cb4 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 plot(training$classe, col="blue", main="Classe with Counts", xlab="classe", ylab="Count")\
+\pard\pardeftab720\sl400\sa200
+
+\f1\fs28 \cf2 \cb1 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 {{\NeXTGraphic unknown.png \width26880 \height19200
+}¬}\
+\pard\pardeftab720\sl660\sa200
+
+\f0\fs60 \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 Machine Learning\
+\pard\pardeftab720\sl400\sa200
+
+\f1\fs28 \cf2 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 First machine learning approach -> Decision Tree\
+\pard\pardeftab720\sl360
+
+\f2\fs26 \cf2 \cb4 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 #Train our decision tree model\
+model.rpart <- rpart(classe ~ ., data=training, method="class")\
+\
+# Predicting \
+predict.rpart <- predict(model.rpart, testing, type = "class")\
+#Review the accuracy\
+confusionMatrix(predict.rpart, testing$classe)\
+\pard\pardeftab720\sl360
+\cf2 \cb5 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 ## Confusion Matrix and Statistics\
+## \
+##           Reference\
+## Prediction    A    B    C    D    E\
+##          A 1473  176   19   35   17\
+##          B   52  713   92   83  107\
+##          C   40  112  823  155  131\
+##          D   70   72   76  596   56\
+##          E   39   66   16   95  771\
+## \
+## Overall Statistics\
+##                                           \
+##                Accuracy : 0.7436          \
+##                  95% CI : (0.7322, 0.7547)\
+##     No Information Rate : 0.2845          \
+##     P-Value [Acc > NIR] : < 2.2e-16       \
+##                                           \
+##                   Kappa : 0.6754          \
+##  Mcnemar's Test P-Value : < 2.2e-16       \
+## \
+## Statistics by Class:\
+## \
+##                      Class: A Class: B Class: C Class: D Class: E\
+## Sensitivity            0.8799   0.6260   0.8021   0.6183   0.7126\
+## Specificity            0.9413   0.9296   0.9099   0.9443   0.9550\
+## Pos Pred Value         0.8564   0.6810   0.6527   0.6851   0.7812\
+## Neg Pred Value         0.9517   0.9119   0.9561   0.9266   0.9365\
+## Prevalence             0.2845   0.1935   0.1743   0.1638   0.1839\
+## Detection Rate         0.2503   0.1212   0.1398   0.1013   0.1310\
+## Detection Prevalence   0.2923   0.1779   0.2143   0.1478   0.1677\
+## Balanced Accuracy      0.9106   0.7778   0.8560   0.7813   0.8338\
+\pard\pardeftab720\sl400\sa200
+
+\f1\fs28 \cf2 \cb1 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 Second machine learning approach -> GBM\
+\pard\pardeftab720\sl360
+
+\f2\fs26 \cf2 \cb4 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 model.gbm <- train(classe ~ ., method="gbm", data=training, verbose=FALSE)\
+\pard\pardeftab720\sl360
+\cf2 \cb5 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \
+\pard\pardeftab720\sl360
+\cf2 \cb4 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 predict.gbm<- predict(model.gbm, testing)\
+confusionMatrix(predict.gbm, testing$classe)\
+\pard\pardeftab720\sl360
+\cf2 \cb5 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 ## Confusion Matrix and Statistics\
+## \
+##           Reference\
+## Prediction    A    B    C    D    E\
+##          A 1652   25    0    0    1\
+##          B   14 1081   41    4   14\
+##          C    3   28  961   26    9\
+##          D    4    2   21  929   15\
+##          E    1    3    3    5 1043\
+## \
+## Overall Statistics\
+##                                           \
+##                Accuracy : 0.9628          \
+##                  95% CI : (0.9576, 0.9675)\
+##     No Information Rate : 0.2845          \
+##     P-Value [Acc > NIR] : < 2.2e-16       \
+##                                           \
+##                   Kappa : 0.9529          \
+##  Mcnemar's Test P-Value : 0.001309        \
+## \
+## Statistics by Class:\
+## \
+##                      Class: A Class: B Class: C Class: D Class: E\
+## Sensitivity            0.9869   0.9491   0.9366   0.9637   0.9640\
+## Specificity            0.9938   0.9846   0.9864   0.9915   0.9975\
+## Pos Pred Value         0.9845   0.9367   0.9357   0.9567   0.9886\
+## Neg Pred Value         0.9948   0.9877   0.9866   0.9929   0.9919\
+## Prevalence             0.2845   0.1935   0.1743   0.1638   0.1839\
+## Detection Rate         0.2807   0.1837   0.1633   0.1579   0.1772\
+## Detection Prevalence   0.2851   0.1961   0.1745   0.1650   0.1793\
+## Balanced Accuracy      0.9903   0.9668   0.9615   0.9776   0.9807\
+\pard\pardeftab720\sl400\sa200
+
+\f1\fs28 \cf2 \cb1 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 Third machine learning approach -> Random Forest\
+\pard\pardeftab720\sl360
+
+\f2\fs26 \cf2 \cb4 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 model.rf <- train(classe ~ ., method="rf", data=training, type="class")\
+predict.rf<- predict(model.rf, testing)\
+confusionMatrix(predict.rf, testing$classe)\
+\pard\pardeftab720\sl360
+\cf2 \cb5 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 ## Confusion Matrix and Statistics\
+## \
+##           Reference\
+## Prediction    A    B    C    D    E\
+##          A 1672   11    0    0    0\
+##          B    2 1126    9    0    1\
+##          C    0    2 1012   16    2\
+##          D    0    0    5  948    5\
+##          E    0    0    0    0 1074\
+## \
+## Overall Statistics\
+##                                           \
+##                Accuracy : 0.991           \
+##                  95% CI : (0.9882, 0.9932)\
+##     No Information Rate : 0.2845          \
+##     P-Value [Acc > NIR] : < 2.2e-16       \
+##                                           \
+##                   Kappa : 0.9886          \
+##  Mcnemar's Test P-Value : NA              \
+## \
+## Statistics by Class:\
+## \
+##                      Class: A Class: B Class: C Class: D Class: E\
+## Sensitivity            0.9988   0.9886   0.9864   0.9834   0.9926\
+## Specificity            0.9974   0.9975   0.9959   0.9980   1.0000\
+## Pos Pred Value         0.9935   0.9895   0.9806   0.9896   1.0000\
+## Neg Pred Value         0.9995   0.9973   0.9971   0.9968   0.9983\
+## Prevalence             0.2845   0.1935   0.1743   0.1638   0.1839\
+## Detection Rate         0.2841   0.1913   0.1720   0.1611   0.1825\
+## Detection Prevalence   0.2860   0.1934   0.1754   0.1628   0.1825\
+## Balanced Accuracy      0.9981   0.9930   0.9911   0.9907   0.9963\
+\pard\pardeftab720\sl400\sa200
+
+\f1\fs28 \cf2 \cb1 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 Based off the accuracy comparison above, Random Forest gives us the highest accuracy. So we will use the Random Forest to perform the final prediction against the test data set\
+\pard\pardeftab720\sl360
+
+\f2\fs26 \cf2 \cb4 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 prediction <- predict(model.rf, testingData)\
+prediction\
+\pard\pardeftab720\sl360
+\cf2 \cb5 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 ##  [1] B A B A A E D B A A B C B A E E A B B B\
+## Levels: A B C D E\
+\pard\pardeftab720\sl400\sa200
+
+\f1\fs28 \cf2 \cb1 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 Finally, we are going to save the output\
+\pard\pardeftab720\sl360
+
+\f2\fs26 \cf2 \cb4 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 product_createFile = function(x) \{\
+  n = length(x)\
+  for (i in 1:n) \{\
+    filename = paste0("problem_id_", i, ".txt")\
+    write.table(x[i], file = filename, quote = FALSE, row.names = FALSE, \
+                col.names = FALSE)\
+  \}\
+\}\
+\
+product_createFile(prediction)\
+}
